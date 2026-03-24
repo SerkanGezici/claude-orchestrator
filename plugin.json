@@ -1,0 +1,8 @@
+{
+  "name": "claude-orchestrator",
+  "version": "1.0.0",
+  "description": "Multi-AI consensus analysis — Claude + Gemini + Codex cross-critique orchestration",
+  "author": "Claude Orchestrator Contributors",
+  "commands": "commands",
+  "hooks": {}
+}
