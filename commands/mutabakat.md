@@ -37,9 +37,9 @@ Ciktiyi kontrol et:
 
 **TIRNAK KURALI:** --workspace parametresine DAIMA cift tirnak icinde path gec. ASLA tirnaksiz path gecme.
 - DOGRU: `--workspace "$(pwd)"`
-- DOGRU: `--workspace "/path/to/project"`
+- DOGRU: `--workspace "/mnt/c/Users/serkan/source/repos/Proje Adi"`
 - YANLIS: `--workspace $(pwd)`
-- YANLIS: `--workspace /path/to/my project`
+- YANLIS: `--workspace /mnt/c/Users/serkan/source/repos/Proje Adi`
 
 ---
 
@@ -126,7 +126,7 @@ Read tool: /tmp/claude-codex-turn-{N-1}-claude.md
 
 Task tool ile Explore subagent cagir:
 ```
-Prompt: "Cross-critique: Onceki raporunu ve diger AI'larin raporlarini karsilastir.
+Prompt: "ADVERSARIAL CROSS-REVIEW: Onceki raporunu ve diger AI'larin raporlarini SORGULA.
 
 SENIN ONCEKI RAPORUN:
 [Claude'un onceki rapor metni]
@@ -134,17 +134,26 @@ SENIN ONCEKI RAPORUN:
 DIGER AI RAPORLARI:
 [Gemini/Codex raporlari]
 
-KARSILASTIRMA:
-- Senin bulgularin hala gecerli mi? Kanitlar guclu mu?
-- Digerleri ne buldu ki sen kacirdin? Katiliyor musun?
-- Hangi bulgular 2+ raporda gorunuyor? (yuksek guven)
-- Celiskiler var mi? Kim hakli?
+ADVERSARIAL REVIEW PROTOKOLU:
+Diger AI'larin raporlarini SORGULAMAK senin gorevidir. Kabul etmek degil.
 
-GELISTIRILMIS RAPOR YAZ:
-- Gecerli bulgulari koru
-- Yanlis/zayif bulgulari cikar
-- Digerlerinden kacirdiklarini ekle
-- Celiskileri not et ve gerekcelendir
+Her diger AI'nin HER bulgusu icin ZORUNLU KARAR:
+- DOGRULANDI: Kendi kanitin ile bagimsiz dogruladinr (dosya:satir referansi ver)
+- ITIRAZ: Karsi kanit buldun veya yanlis (dosya:satir referansi ver)
+- YETERSIZ: Kanitlari zayif, ne dogrulayabilirsin ne reddet
+
+ZORUNLU KURALLAR:
+- EN AZ 2 bulguya ITIRAZ ET (her raporda zayiflik vardir)
+- 'Her seye katiliyorum' KABUL EDILEMEZ — sifir deger katar
+- Yanlis dosya referanslari, severity inflation, eksik context ara
+- Itiraz edilen ve hayatta kalan bulgular DAHA GUCLUDUR
+
+ADVERSARIAL REVIEW RAPORU YAZ:
+1. KENDI BULGULARIN: Guclendirilmis kanit ile yeniden onayla veya geri cek
+2. ITIRAZ EDILEN BULGULAR: Karsi kanitlarla listele
+3. DOGRULANAN BULGULAR: Bagimsiz dogruladiklarini listele
+4. YENI BULGULAR: Kimsenin bulmadigi yeni bulgular
+5. KARAR TABLOSU: Her AI'nin her bulgusu icin DOGRULANDI/ITIRAZ/YETERSIZ
 
 === RAPOR FORMATI (ZORUNLU) ===
 
@@ -221,6 +230,25 @@ node ${CLAUDE_PLUGIN_ROOT}/lib/run-orchestration.js --single-turn --turn N --tas
 
 ### 2C: WORKER BEKLEME + CONVERGENCE KONTROLU
 
+### ⛔ SERT KURAL: WORKER BEKLEME (IHLAL EDILEMEZ)
+
+1. workers-turn-N.json DOSYASI OLUSMADAN final rapor YAZMA
+2. "Worker sonucu yok, ben kendim yazarim" DEME — timeout 10dk bekle
+3. Kendi analizini "mutabakat raporu" olarak SUNMA — sen analistlerden sadece BIRISIN
+4. Worker dosyasi YOKSA → TaskOutput ile BEKLE veya 10dk timeout
+
+SEN (Claude) TEK BASINA MUTABAKAT YAPAMAZSIN.
+Mutabakat = birden fazla AI'in uzlastigi bulgular demektir.
+Senin raporun tek basina sadece bir GORUS'tur, MUTABAKAT RAPORU degildir.
+
+KONTROL LISTESI (her turda ZORUNLU):
+[ ] workers-turn-N.json var mi? → Yoksa BEKLE
+[ ] Dosyayi OKUDUN mu?
+[ ] Her worker'dan en az 1 bulgu ALINTILADIN mi?
+[ ] Ancak BUNLARDAN SONRA final rapora gectin mi?
+
+---
+
 **KRITIK ZAMANLAMA KURALI:** Claude'un 2A analizi genellikle 2-3dk'da biter, dis worker'lar 5-15dk surebilir.
 Claude ASLA worker sonuclarini beklemeden final rapora gecmemeli.
 
@@ -251,9 +279,9 @@ Sonra TaskOutput tool'u ile arka plan Bash gorevinin tamamlanmasini bekle.
 Arka plan gorevi tamamlaninca otomatik bildirim gelecek — O ZAMANA KADAR BASKA ISLEM YAPMA.
 
 **ASLA YAPMA:**
-- Worker'lari beklemeden final rapora gecme
-- "Worker raporu yok, tek basima yazayim" deme (timeout olmadan)
-- Kullaniciya "devam edeyim mi?" diye sorma (bekle, bildirim gelecek)
+- ❌ Worker'lari beklemeden final rapora gecme
+- ❌ "Worker raporu yok, tek basima yazayim" deme (timeout olmadan)
+- ❌ Kullaniciya "devam edeyim mi?" diye sorma (bekle, bildirim gelecek)
 
 #### Adim 3: Timeout kontrolu (10dk sonra hala bitmemisse)
 
@@ -263,7 +291,7 @@ test -f /tmp/claude-codex-workers-turn-N.json && echo "WORKERS_DONE" || echo "WO
 ```
 
 **WORKERS_TIMEOUT ise:**
-- Kullaniciya bildir: "[AKTIF_WORKER_ISIMLERI] 10dk icinde yanitlamadi. Claude tek basina devam ediyor."
+- Kullaniciya bildir: "⚠️ [AKTIF_WORKER_ISIMLERI] 10dk icinde yanitlamadi. Claude tek basina devam ediyor."
 - Worker log'unu kontrol et: `tail -20 /tmp/claude-codex-worker-log.txt`
 - Sadece Claude raporuyla final rapora gec (raporda hangi worker'in katilmadigini belirt)
 
@@ -304,6 +332,26 @@ Claude olarak TUM raporlari oku ve KENDISI final raporu yaz:
 1. Son turun Claude raporu: `/tmp/claude-codex-turn-{SON}-claude.md`
 2. Son turun worker raporlari: `/tmp/claude-codex-workers-turn-{SON}.json`
 
+### ZORUNLU: WORKER BULGULARI ENTEGRASYONU
+
+Final rapor yazmadan ONCE bu tabloyu doldur ve kullaniciya goster:
+
+| # | Worker | Bulgu Basligi | Karar | Gerekce |
+|---|--------|---------------|-------|---------|
+| 1 | Gemini | [baslik] | KATILIYORUM / ITIRAZ / YENI | [neden?] |
+| 2 | Gemini | [baslik] | KATILIYORUM / ITIRAZ / YENI | [neden?] |
+| ... | ... | ... | ... | ... |
+
+KURALLAR:
+- Her worker'dan EN AZ 2 bulguyu tabloya ekle
+- "YENI" = Senin analizinde olmayan, worker'in buldugu bulgu
+- "ITIRAZ" icin karsi kanit goster (dosya:satir)
+- Bu tablo OLMADAN final rapor GECERSIZDIR
+- KATILIYORUM + YENI → final rapora DAHIL ET
+- ITIRAZ → final raporda TARTISMALI olarak belirt
+
+---
+
 Bu raporlari sentezle:
 
 ### SENTEZ KURALLARI:
@@ -311,6 +359,7 @@ Bu raporlari sentezle:
 - **ORTA GUVEN:** 1 AI buldu, diger(ler)i ne kabul ne reddetmis → Muhtemel bulgu
 - **DUSUK GUVEN:** Sadece 1 AI buldu, diger(ler)i reddetmis → Tartismali
 - **KANIT ONCELIGI:** Dosya:satir referansi olan bulgular oncelikli
+- **ENTEGRASYON:** Final raporda SADECE Claude bulgulari varsa rapor GECERSIZ. Worker bulgularinin en az %30'u final raporda yer almali (katilim veya tartisma olarak).
 
 Final raporu kullaniciya sun:
 
