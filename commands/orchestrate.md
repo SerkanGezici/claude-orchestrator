@@ -143,10 +143,10 @@ Her diger AI'nin HER bulgusu icin ZORUNLU KARAR:
 - YETERSIZ: Kanitlari zayif, ne dogrulayabilirsin ne reddet
 
 ZORUNLU KURALLAR:
-- EN AZ 2 bulguya ITIRAZ ET (her raporda zayiflik vardir)
-- 'Her seye katiliyorum' KABUL EDILEMEZ — sifir deger katar
+- Her bulguyu bagimsiz dogrula — koru korune kabul etme
 - Yanlis dosya referanslari, severity inflation, eksik context ara
-- Itiraz edilen ve hayatta kalan bulgular DAHA GUCLUDUR
+- Dogruladigin bulgular icin KENDI kanitin ile destekle (sadece "katiliyorum" yetmez)
+- Bagimsiz kanitla dogrulanan bulgular DAHA GUCLUDUR
 
 ADVERSARIAL REVIEW RAPORU YAZ:
 1. KENDI BULGULARIN: Guclendirilmis kanit ile yeniden onayla veya geri cek
