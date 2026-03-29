@@ -111,7 +111,9 @@ Ornek: 'SQL Injection in User Query', 'Missing CSRF Token Validation', 'N+1 Quer
 "
 ```
 
-Subagent'in raporunu `/tmp/claude-codex-turn-{N}-claude.md` dosyasina Write tool ile kaydet.
+Subagent'in dondurdugu RAPORUN TAMAMINI `/tmp/claude-codex-turn-{N}-claude.md` dosyasina Write tool ile kaydet.
+KRITIK: Ozet veya baslik YAZMA. Subagent'in urettigi detayli analiz metni + JSON findings blogunu OLDUGU GIBI kaydet.
+Bu dosya bir sonraki turda Gemini'ye gonderilecek — eksik rapor = Gemini senin bulgularini goremez.
 
 **TUR 2+ icin** (cross-critique):
 
@@ -198,7 +200,9 @@ Diger AI'dan dogrulanan bulgular icin ONLARIN baslik ifadesini kullan.
 "
 ```
 
-Subagent'in raporunu `/tmp/claude-codex-turn-{N}-claude.md` dosyasina Write tool ile kaydet.
+Subagent'in dondurdugu RAPORUN TAMAMINI `/tmp/claude-codex-turn-{N}-claude.md` dosyasina Write tool ile kaydet.
+KRITIK: Ozet veya baslik YAZMA. Subagent'in urettigi detayli analiz metni + JSON findings blogunu OLDUGU GIBI kaydet.
+Bu dosya bir sonraki turda Gemini'ye gonderilecek — eksik rapor = Gemini senin bulgularini goremez.
 
 ### 2B: DIS WORKER'LAR (Claude ile PARALEL)
 
