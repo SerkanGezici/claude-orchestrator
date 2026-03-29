@@ -14,8 +14,25 @@ Her turda Claude kendi bagimsiz analizini yapar, diger AI'larla gercek cross-cri
 ## WORKSPACE
 $(pwd) — komutun calistirildigi dizin
 
+## ARGUMANLAR
+$ARGUMENTS'i parse et:
+- Eger SADECE bir sayi varsa (orn: "5", "10") → Bu MAKSIMUM TUR SAYISI. Gorev varsayilan.
+- Eger metin varsa (orn: "guvenlik analizi yap") → Bu GOREV. Tur sayisi varsayilan.
+- Eger sayi + metin varsa (orn: "7 guvenlik analizi") → Sayi = tur sayisi, geri kalan = gorev.
+- Eger bos ise → Gorev varsayilan, tur sayisi varsayilan.
+
+Ornekler:
+- `/mutabakat` → 4 tur, genel analiz
+- `/mutabakat 3` → 3 tur, genel analiz
+- `/mutabakat 10` → 10 tur, genel analiz
+- `/mutabakat guvenlik odakli analiz` → 4 tur, guvenlik odakli
+- `/mutabakat 5 sadece performans` → 5 tur, performans odakli
+
+## TUR SAYISI
+$ARGUMENTS'tan cikarilan sayi. Yoksa varsayilan: 4, maksimum: 10.
+
 ## GOREV
-$ARGUMENTS bos ise: "Bu projeyi kapsamli analiz et: guvenlik, mimari, performans, kod kalitesi"
+$ARGUMENTS'tan cikarilan metin. Yoksa varsayilan: "Bu projeyi kapsamli analiz et: guvenlik, mimari, performans, kod kalitesi"
 
 ---
 
@@ -60,7 +77,7 @@ Ciktiyi oku:
 
 ---
 
-## ADIM 2: TUR DONGUSU (Varsayilan 4 tur, Maks 5 tur)
+## ADIM 2: TUR DONGUSU (Kullanicinin belirttigi tur sayisi kadar)
 
 Her tur icin asagidaki A, B, C adimlarini tekrarla:
 
@@ -342,9 +359,11 @@ JSON formatta cikti ver: convergence_score, matched_findings, claude_only, gemin
 
 3. Sonucu degerledir:
 - `convergence_score >= 0.70` → TUR DONGUSUNU BITIR, Adim 3'e gec
-- `convergence_score < 0.70` ve tur < 5 → Sonraki tura devam
-- Tur 4 tamamlandiginda convergence >= 0.60 ise → BITIR (varsayilan 4 tur yeterli)
-- Tur 5'e ulasti → Yine Adim 3'e gec (maksimum 5 tur)
+- `convergence_score < 0.70` ve tur < TUR_SAYISI → Sonraki tura devam
+- TUR_SAYISI'na ulasti → Yine Adim 3'e gec
+
+NOT: TUR_SAYISI kullanicinin belirttigi deger (varsayilan 4, maks 10).
+Ornek: `/mutabakat 7` → 7 tur calisir, convergence >= 0.70 olursa erken cikar.
 - Tur 10'a ulasti → Yine Adim 3'e gec
 
 Kullaniciya her turda ilerleme bilgisi ver:
