@@ -60,7 +60,7 @@ Ciktiyi oku:
 
 ---
 
-## ADIM 2: TUR DONGUSU (Maks 10 tur)
+## ADIM 2: TUR DONGUSU (Varsayilan 4 tur, Maks 5 tur)
 
 Her tur icin asagidaki A, B, C adimlarini tekrarla:
 
@@ -126,7 +126,9 @@ Read tool: /tmp/claude-codex-turn-{N-1}-claude.md
 
 Task tool ile Explore subagent cagir:
 ```
-Prompt: "ADVERSARIAL CROSS-REVIEW: Onceki raporunu ve diger AI'larin raporlarini SORGULA.
+Prompt: "CROSS-CRITIQUE RE-INVESTIGATION: Onceki raporunu ve diger AI'larin raporlarini oku, yeniden arastir, daha kapsamli rapor yaz.
+
+PROJE: [WORKSPACE]
 
 SENIN ONCEKI RAPORUN:
 [Claude'un onceki rapor metni]
@@ -134,36 +136,48 @@ SENIN ONCEKI RAPORUN:
 DIGER AI RAPORLARI:
 [Gemini/Codex raporlari]
 
-ADVERSARIAL REVIEW PROTOKOLU:
-Diger AI'larin raporlarini SORGULAMAK senin gorevidir. Kabul etmek degil.
+=== UC ASAMALI CROSS-CRITIQUE PROTOKOLU ===
 
-Her diger AI'nin HER bulgusu icin ZORUNLU KARAR:
-- DOGRULANDI: Kendi kanitin ile bagimsiz dogruladinr (dosya:satir referansi ver)
-- ITIRAZ: Karsi kanit buldun veya yanlis (dosya:satir referansi ver)
-- YETERSIZ: Kanitlari zayif, ne dogrulayabilirsin ne reddet
+ASAMA 1 — KESIF (Gap Analizi):
+Diger AI'nin raporunu dikkatlice oku ve kendininkiyle karsilastir.
+Belirle:
+- Diger AI'nin bulup SENIN KACIRDIGIN bulgular — her birini listele
+- Senin incelemedigin ama diger AI'nin inceledigi dosya/alanlar
+- Daha az bulgun olan kategoriler (security/architecture/performance/quality)
+- Diger AI'nin yanlis veya abartili gozuken bulgulari
 
-ZORUNLU KURALLAR:
-- Her bulguyu bagimsiz dogrula — koru korune kabul etme
-- Yanlis dosya referanslari, severity inflation, eksik context ara
-- Dogruladigin bulgular icin KENDI kanitin ile destekle (sadece "katiliyorum" yetmez)
-- Bagimsiz kanitla dogrulanan bulgular DAHA GUCLUDUR
+ASAMA 2 — ARASTIRMA (Derinlemesine Yeniden Analiz):
+Asama 1'deki her gap icin:
+- Kaynak dosyalari KENDIM oku ve bagimsiz dogrula
+- Diger AI'nin bulgusu gecerliyse KENDI kanitin ile destekle (dosya:satir)
+- Ayni dosyalarda HICBIR AI'nin bulamadigi EK sorunlar ara
+- Onceden inceledigin alanlari tekrar tara — bir sey kacirmis miydin?
 
-ADVERSARIAL REVIEW RAPORU YAZ:
-1. KENDI BULGULARIN: Guclendirilmis kanit ile yeniden onayla veya geri cek
-2. ITIRAZ EDILEN BULGULAR: Karsi kanitlarla listele
-3. DOGRULANAN BULGULAR: Bagimsiz dogruladiklarini listele
-4. YENI BULGULAR: Kimsenin bulmadigi yeni bulgular
-5. KARAR TABLOSU: Her AI'nin her bulgusu icin DOGRULANDI/ITIRAZ/YETERSIZ
+Itiraz ettigin bulgular icin:
+- Karsi kanit goster (dosya:satir)
+- Neden yanlis veya abartili oldugunu acikla
+
+ASAMA 3 — KAPSAMLI RAPOR:
+Yeni raporun sunlari ICERMELI:
+1. Onceki turdan KORUNAN kendi bulgularin (kanitla)
+2. Diger AI'dan DOGRULADIGIN bulgular (KENDI kanitin ile)
+3. Bu turda kesfettigin YENI bulgular
+4. ITIRAZ ettigin bulgular (karsi kanitla)
+
+KRITIK KURALLAR:
+- Raporun onceki turundan DAHA KAPSAMLI olmali
+- Bulgu sayisi ARTMALI veya en az ayni kalmali (geri cekmeler icin kanit zorunlu)
+- Sadece 'katiliyorum' YETMEZ — dogruladigin bulgular icin KENDI dosya:satir kanitin ver
+- Koru korune kabul etme — her bulguyu kodu okuyarak dogrula
+- Dogruladigin bulguyu JSON listesine EKLE
 
 === RAPOR FORMATI (ZORUNLU) ===
 
 BOLUM 1: DETAYLI ANALIZ
-Tam analizini dogal dilde INGILIZCE yaz. Cross-critique sonuclarini, hangi bulgularin guclendigi,
-hangi bulgularin zayifladigi, yeni eklenen bulgulari acikla.
-Her bulgu icin dosya:satir referansi ZORUNLU.
+Tam analizini dogal dilde INGILIZCE yaz. Her bulgu icin dosya:satir referansi ZORUNLU.
 
 BOLUM 2: YAPISAL OZET (ZORUNLU - raporun EN SONUNDA)
-Raporun en sonuna asagidaki JSON blogunu ekle:
+Guncel JSON blogu TUM bulgulari icermeli (korunan + dogrulanan + yeni):
 \`\`\`json
 {
   \"findings\": [
@@ -180,7 +194,7 @@ Raporun en sonuna asagidaki JSON blogunu ekle:
 
 BASLIK KURALLARI: Basliklari KISA tut (3-8 kelime), ANAHTAR TEKNIK TERIMLER kullan.
 Degismeyen bulgular icin onceki turla AYNI baslik ifadesini kullan.
-Ornek: 'SQL Injection in User Query', 'Missing CSRF Token Validation'
+Diger AI'dan dogrulanan bulgular icin ONLARIN baslik ifadesini kullan.
 "
 ```
 
@@ -324,7 +338,9 @@ JSON formatta cikti ver: convergence_score, matched_findings, claude_only, gemin
 
 3. Sonucu degerledir:
 - `convergence_score >= 0.70` → TUR DONGUSUNU BITIR, Adim 3'e gec
-- `convergence_score < 0.70` ve tur < 10 → Sonraki tura devam
+- `convergence_score < 0.70` ve tur < 5 → Sonraki tura devam
+- Tur 4 tamamlandiginda convergence >= 0.60 ise → BITIR (varsayilan 4 tur yeterli)
+- Tur 5'e ulasti → Yine Adim 3'e gec (maksimum 5 tur)
 - Tur 10'a ulasti → Yine Adim 3'e gec
 
 Kullaniciya her turda ilerleme bilgisi ver:
