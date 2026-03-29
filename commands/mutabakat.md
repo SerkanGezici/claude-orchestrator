@@ -3,7 +3,7 @@ name: mutabakat
 description: Claude + Codex + Gemini ile aktif mutabakat analizi (works globally)
 ---
 
-Kullanici `/mutabakat` komutunu calistirdi. `/orchestrate` komutuyla AYNI akisi izle.
+Kullanici `/mutabakat` komutunu calistirdi. Asagidaki akisi AYNEN izle.
 
 **KRITIK:** Claude bu sistemde PASIF koordinator DEGIL, AKTIF analisttir.
 Her turda Claude kendi bagimsiz analizini yapar, diger AI'larla gercek cross-critique gerceklesir.
