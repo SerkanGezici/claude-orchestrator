@@ -9,7 +9,7 @@ Kullanici `/mutabakat` komutunu calistirdi. Asagidaki akisi AYNEN izle.
 Her turda Claude kendi bagimsiz analizini yapar, diger AI'larla gercek cross-critique gerceklesir.
 
 ## RUNNER
-`${CLAUDE_PLUGIN_ROOT}/lib/run-orchestration.js`
+`~/.claude/claude-codex/run-orchestration.js`
 
 ## WORKSPACE
 $(pwd) — komutun calistirildigi dizin
@@ -47,7 +47,7 @@ Ciktiyi kontrol et:
 
 Bash tool ile calistir:
 ```
-node ${CLAUDE_PLUGIN_ROOT}/lib/run-orchestration.js --health-check
+node ~/.claude/claude-codex/run-orchestration.js --health-check
 ```
 
 Ciktiyi oku:
@@ -192,7 +192,7 @@ Subagent'in raporunu `/tmp/claude-codex-turn-{N}-claude.md` dosyasina Write tool
 
 **TUR 1 icin:**
 ```
-node ${CLAUDE_PLUGIN_ROOT}/lib/run-orchestration.js --single-turn --turn 1 --task "$GOREV" --workspace "$(pwd)" 2>/tmp/claude-codex-worker-log.txt
+node ~/.claude/claude-codex/run-orchestration.js --single-turn --turn 1 --task "$GOREV" --workspace "$(pwd)" 2>/tmp/claude-codex-worker-log.txt
 ```
 
 **NOT:** Runner otomatik olarak:
@@ -203,7 +203,7 @@ node ${CLAUDE_PLUGIN_ROOT}/lib/run-orchestration.js --single-turn --turn 1 --tas
 
 Ek dizinleri manuel de gecebilirsin:
 ```
-node ${CLAUDE_PLUGIN_ROOT}/lib/run-orchestration.js --single-turn --turn 1 --task "$GOREV" --workspace "$(pwd)" --include-dirs "/path/to/other/project" 2>/tmp/claude-codex-worker-log.txt
+node ~/.claude/claude-codex/run-orchestration.js --single-turn --turn 1 --task "$GOREV" --workspace "$(pwd)" --include-dirs "/path/to/other/project" 2>/tmp/claude-codex-worker-log.txt
 ```
 
 **TUR 2+ icin:**
@@ -225,7 +225,7 @@ console.log('Merged: ' + Object.keys(allReports).join(', '));
 
 Sonra worker'lari calistir (arka planda):
 ```
-node ${CLAUDE_PLUGIN_ROOT}/lib/run-orchestration.js --single-turn --turn N --task "$GOREV" --workspace "$(pwd)" --prev-reports /tmp/claude-codex-all-reports-turn-PREV.json 2>/tmp/claude-codex-worker-log.txt
+node ~/.claude/claude-codex/run-orchestration.js --single-turn --turn N --task "$GOREV" --workspace "$(pwd)" --prev-reports /tmp/claude-codex-all-reports-turn-PREV.json 2>/tmp/claude-codex-worker-log.txt
 ```
 
 ### 2C: WORKER BEKLEME + CONVERGENCE KONTROLU
@@ -310,14 +310,21 @@ console.log(Object.keys(allReports).join(', '));
 "
 ```
 
-2. Convergence olc:
+2. Convergence olc — `convergence-judge` AGENT'i kullan (Jaccard degil, SEMANTIK karsilastirma):
+
+Agent tool cagir (subagent_type: "convergence-judge"):
 ```
-node ${CLAUDE_PLUGIN_ROOT}/lib/run-orchestration.js --check-convergence /tmp/claude-codex-all-reports-turn-N.json
+Prompt: "Asagidaki iki AI raporunu semantik olarak karsilastir ve mutabakat yuzdesi hesapla.
+
+CLAUDE RAPORU: /tmp/claude-codex-turn-N-claude.md dosyasini oku
+GEMINI RAPORU: /tmp/claude-codex-workers-turn-N.json dosyasini oku (workers.gemini.report alani)
+
+JSON formatta cikti ver: convergence_score, matched_findings, claude_only, gemini_only"
 ```
 
 3. Sonucu degerledir:
-- `converged: true` → TUR DONGUSUNU BITIR, Adim 3'e gec
-- `converged: false` ve tur < 10 → Sonraki tura devam
+- `convergence_score >= 0.70` → TUR DONGUSUNU BITIR, Adim 3'e gec
+- `convergence_score < 0.70` ve tur < 10 → Sonraki tura devam
 - Tur 10'a ulasti → Yine Adim 3'e gec
 
 Kullaniciya her turda ilerleme bilgisi ver:
